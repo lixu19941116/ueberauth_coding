@@ -1,5 +1,11 @@
 defmodule Ueberauth.Strategy.Coding.OAuth do
-  @moduledoc false
+  @moduledoc """
+  An implementation of OAuth2 for coding.
+  To add your `client_id` and `client_secret` include these values in your configuration.
+      config :ueberauth, Ueberauth.Strategy.Coding.OAuth,
+        client_id: System.get_env("Coding_CLIENT_ID"),
+        client_secret: System.get_env("Coding_CLIENT_SECRET")
+  """
 
   use OAuth2.Strategy
 
@@ -10,6 +16,13 @@ defmodule Ueberauth.Strategy.Coding.OAuth do
     token_url: "/api/oauth/access_token",
   ]
 
+  @doc """
+  Construct a client for requests to Coding.
+  Optionally include any OAuth2 options here to be merged with the defaults.
+      Ueberauth.Strategy.Coding.OAuth.client(redirect_uri: "http://localhost:4000/auth/coding/callback")
+  This will be setup automatically for you in `Ueberauth.Strategy.Coding`.
+  These options are only useful for usage outside the normal callback phase of Ueberauth.
+  """
   def client(opts \\ []) do
     config = Application.get_env(:ueberauth, Ueberauth.Strategy.Coding.OAuth)
 
@@ -19,6 +32,9 @@ defmodule Ueberauth.Strategy.Coding.OAuth do
     |> OAuth2.Client.new
   end
 
+  @doc """
+  Provides the authorize url for the request phase of Ueberauth. No need to call this usually.
+  """
   def authorize_url!(params \\ [], opts \\ []) do
     opts
     |> client

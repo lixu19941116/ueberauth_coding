@@ -1,10 +1,52 @@
 defmodule Ueberauth.Strategy.Coding do
-  @moduledoc false
+  @moduledoc """
+  Provides an Ueberauth strategy for authenticating with Coding.
+  ### Setup
+  Create an application in Coding for you to use.
+  Register a new application at: [your coding applications page](https://coding.net/user/account/setting/applications) and get the `client_id` and `client_secret`.
+  Include the provider in your configuration for Ueberauth
+      config :ueberauth, Ueberauth,
+        providers: [
+          coding: {Ueberauth.Strategy.Coding, []}
+        ]
+  Then include the configuration for coding.
+      config :ueberauth, Ueberauth.Strategy.Coding.OAuth,
+        client_id: System.get_env("CODING_CLIENT_ID"),
+        client_secret: System.get_env("CODING_CLIENT_SECRET")
+  If you haven't already, create a pipeline and setup routes for your callback handler
+      pipeline :auth do
+        Ueberauth.plug "/auth"
+      end
+      scope "/auth" do
+        pipe_through [:browser, :auth]
+        get "/:provider/callback", AuthController, :callback
+      end
+  Create an endpoint for the callback where you will handle the `Ueberauth.Auth` struct
+      defmodule MyApp.AuthController do
+        use MyApp.Web, :controller
+        def callback_phase(%{assigns: %{ueberauth_failure: failure}} = conn, _params) do
+          # do things with the failure
+        end
+        def callback_phase(%{assigns: %{ueberauth_auth: auth}} = conn, params) do
+          # do things with the auth
+        end
+      end
+  You can edit the behaviour of the Strategy by including some options when you register your provider.
+  To set the default 'scopes' (permissions):
+      config :ueberauth, Ueberauth,
+        providers: [
+          coding: {Ueberauth.Strategy.Coding, [default_scope: "user"]}
+        ]
+  Default is "user"
+  """
 
   use Ueberauth.Strategy, oauth2_module: Ueberauth.Strategy.Coding.OAuth
 
   alias Ueberauth.Auth.{Credentials, Info, Extra}
 
+  @doc """
+  Handles the initial redirect to the coding authentication page.
+  """
   def handle_request!(conn) do
     scopes = conn.params["scope"] || option(conn, :default_scope)
     opts = [redirect_uri: callback_url(conn), scope: scopes]
@@ -16,6 +58,9 @@ defmodule Ueberauth.Strategy.Coding do
     redirect!(conn, apply(module, :authorize_url!, [opts]))
   end
 
+  @doc """
+  Handles the callback from Coding.
+  """
   def handle_callback!(%Plug.Conn{params: %{"code" => code}} = conn) do
     module = option(conn, :oauth2_module)
     client = apply(module, :get_token!, [[code: code]])
@@ -39,10 +84,16 @@ defmodule Ueberauth.Strategy.Coding do
     |> put_private(:coding_token, nil)
   end
 
+  @doc """
+  Fetches the uid field from the Coding response.
+  """
   def uid(conn) do
     conn.private.coding_user["id"]
   end
 
+  @doc """
+  Includes the credentials from the Coding response.
+  """
   def credentials(conn) do
     token = conn.private.coding_token
     scope_string = (token.other_params["scope"] || "")
@@ -58,6 +109,9 @@ defmodule Ueberauth.Strategy.Coding do
     }
   end
 
+  @doc """
+  Fetches the fields to populate the info section of the `Ueberauth.Auth` struct.
+  """
   def info(conn) do
     user = conn.private.coding_user
 
@@ -71,6 +125,9 @@ defmodule Ueberauth.Strategy.Coding do
     }
   end
 
+  @doc """
+  Stores the raw information (including the token) obtained from the Coding callback.
+  """
   def extra(conn) do
     %Extra {
       raw_info: %{
