@@ -40,7 +40,8 @@ defmodule Ueberauth.Strategy.Coding do
   Default is "user"
   """
 
-  use Ueberauth.Strategy, oauth2_module: Ueberauth.Strategy.Coding.OAuth
+  use Ueberauth.Strategy, oauth2_module: Ueberauth.Strategy.Coding.OAuth,
+                          default_scope: "user"
 
   alias Ueberauth.Auth.{Credentials, Info, Extra}
 
