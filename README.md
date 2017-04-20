@@ -45,10 +45,8 @@
     defmodule MyApp.AuthController do
       use MyApp.Web, :controller
 
-      pipeline :browser do
-        plug Ueberauth
-        ...
-       end
+      plug Ueberauth
+      ...
     end
     ```
 
