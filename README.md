@@ -63,7 +63,7 @@
 
 8. You controller needs to implement callbacks to deal with `Ueberauth.Auth` and `Ueberauth.Failure` responses.
 
-For an example implementation see the [Überauth Example](https://github.com/ueberauth/ueberauth_example) application.
+For an example implementation see the [Überauth Coding Example](https://github.com/lixu19941116/ueberauth_coding_example) application.
 
 ## Calling
 
